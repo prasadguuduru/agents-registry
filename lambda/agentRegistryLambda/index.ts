@@ -26,14 +26,40 @@ export async function handler(event: APIGatewayEvent, context: Context, callback
     let parsedBody = body ? JSON.parse(body) : {};
 
     if (httpMethod === "POST" && path === "/register") {
-        const { agentId, type } = parsedBody;
-        if (!agentId || !type) return sendResponse(400, { error: "Missing agentId or type" });
-
+        const { agentId, type, agentUrl, clientId, secret, topics } = parsedBody as {
+            agentId: string;
+            type: string;
+            agentUrl: string;
+            clientId: string;
+            secret: string;
+            topics?: string; // Optional in case it's missing
+        };
+    
+        if (!agentId || !type || !agentUrl || !clientId || !secret || topics === undefined) {
+            return sendResponse(400, { error: "Missing required parameters" });
+        }
+    
         const existingAgent = await dynamoDB.get({ TableName: AGENT_TABLE, Key: { agentId } }).promise();
-        if (existingAgent.Item) return sendResponse(400, { error: "Agent already registered" });
-        
+        if (existingAgent.Item) {
+            return sendResponse(400, { error: "Agent already registered" });
+        }
+    
         const clientSecret = generateSecret();
-        await dynamoDB.put({ TableName: AGENT_TABLE, Item: { agentId, clientSecret, type } }).promise();
+        const topicsArray: string[] = topics.split(',').map(topic => topic.trim()); // Explicitly define as string[]
+    
+        await dynamoDB.put({
+            TableName: AGENT_TABLE,
+            Item: { 
+                agentId, 
+                clientSecret, 
+                type, 
+                agentUrl, 
+                clientId, 
+                secret, 
+                topics: topicsArray 
+            }
+        }).promise();
+    
         return sendResponse(200, { agentId, clientSecret });
     }
 

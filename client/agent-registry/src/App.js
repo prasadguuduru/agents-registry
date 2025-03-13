@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -10,6 +9,7 @@ import { Brightness4, Brightness7 } from '@mui/icons-material';
 import AgentRegistration from './pages/AgentRegistration';
 import AccessControl from './pages/AccessControl';
 import TokenManagement from './pages/TokenManagement';
+import AuthLogs from './pages/AuthLogs'; //
 
 // Context
 import { ApiUrlProvider } from './context/ApiUrlContext';
@@ -87,12 +87,24 @@ function App() {
                 >
                   Token Management
                 </Typography>
+                <Typography 
+                  component="a" 
+                  href="/agent-interactions" 
+                  sx={{ 
+                    color: 'primary.main', 
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  Agent Interactions
+                </Typography>
               </Box>
               
               <Routes>
                 <Route path="/" element={<AgentRegistration />} />
                 <Route path="/access-control" element={<AccessControl />} />
                 <Route path="/tokens" element={<TokenManagement />} />
+                <Route path="/agent-interactions" element={<AuthLogs />} />
               </Routes>
             </Container>
             
