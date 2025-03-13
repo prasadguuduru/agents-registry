@@ -1,0 +1,13 @@
+{
+    "name": "authorizer-lambda",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "build": "npx tsc --project ./tsconfig.json && mkdir -p ../../build/authroizerLambda && cp -r * ../../build/authroizerLambda"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+      "@types/aws-lambda": "^8.10.92"
+    }
+  }

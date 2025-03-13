@@ -1,0 +1,13 @@
+{
+    "name": "agent-registry-lambda",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "build": "npx tsc --project ./tsconfig.json && mkdir -p ../../build/agentRegistryLambda && cp -r * ../../build/agentRegistryLambda"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+      "@types/aws-lambda": "^8.10.92"
+    }
+  }

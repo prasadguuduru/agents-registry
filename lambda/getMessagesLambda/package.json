@@ -1,0 +1,12 @@
+{
+    "name": "get-message-lambda",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "build": "npx tsc --project ./tsconfig.json && mkdir -p ../../build/getMessagesLambda && cp -r * ../../build/getMessagesLambda"
+    },
+    "dependencies": {
+      "uuid": "^9.0.0",
+      "@aws-sdk/client-dynamodb": "^3.320.0"
+    }
+  }

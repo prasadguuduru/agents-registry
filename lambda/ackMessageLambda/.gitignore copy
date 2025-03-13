@@ -1,0 +1,12 @@
+node_modules/
+**/node_modules/
+**/terraform/terraform.tfstate.backup
+**/terraform/terraform.tfstate
+**/.terraform/*
+**/terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.89.0/darwin_arm64/terraform-provider-aws_v5.89.0_x5
+dist/
+build/
+
+# Ignore all .zip files at any depth
+*.zip
+**/*.zip

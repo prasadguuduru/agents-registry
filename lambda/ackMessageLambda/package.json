@@ -1,0 +1,14 @@
+{
+    "name": "ack-message-lambda",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "build": "npx tsc --project ./tsconfig.json && mkdir -p ../../build/ackMessageLambda && cp -r * ../../build/ackMessageLambda"
+    },
+    "dependencies": {
+      "uuid": "^9.0.0"
+    },
+    "devDependencies": {
+      "@aws-sdk/client-dynamodb": "^3.320.0"
+    }
+  }

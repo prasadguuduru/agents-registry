@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "target": "ES2019",
+      "module": "commonjs",
+      "outDir": "./build",
+      "rootDir": "./",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "sourceMap": true
+    },
+    "include": [
+      "./lambda/sendMessageLambda/**/*.ts",
+      "./lambda/getMessagesLambda/**/*.ts",
+      "./lambda/ackMessageLambda/**/*.ts"
+    ],
+    "exclude": [
+      "node_modules",
+      "build"
+    ]
+  }

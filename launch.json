@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug sendMessageLambda",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/sendMessageLambda/index.js",
+        "preLaunchTask": "build",
+        "outFiles": ["${workspaceFolder}/build/sendMessageLambda/**/*.js"],
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Debug getMessagesLambda",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/getMessagesLambda/index.js",
+        "preLaunchTask": "build",
+        "outFiles": ["${workspaceFolder}/build/getMessagesLambda/**/*.js"],
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Debug ackMessageLambda",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/ackMessageLambda/index.js",
+        "preLaunchTask": "build",
+        "outFiles": ["${workspaceFolder}/build/ackMessageLambda/**/*.js"],
+        "console": "integratedTerminal"
+      }
+    ]
+  }
