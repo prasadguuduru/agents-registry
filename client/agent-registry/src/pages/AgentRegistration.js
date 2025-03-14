@@ -25,6 +25,7 @@ const AgentRegistration = () => {
   const [formData, setFormData] = useState({
     agentId: "",
     type: "service",
+    salesforceAgentId:'',
     agentUrl: "",
     clientId: "",
     secret: "",
@@ -199,16 +200,17 @@ const AgentRegistration = () => {
                     helperText="Currently only 'service' type is supported"
                   />
                 </Grid>
-
+                
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Salesforce AgentId"
-                    name="type"
+                    name="salesforceAgentId"
                     value={formData.salesforceAgentId}
                     onChange={handleChange}
                     error={!!errors.salesforceAgentId}
-                    helperText={errors.salesforceAgentId || "Enter the SalesforceAgentId"}
+                    helperText={errors.salesforceAgentId || "Enter the Salesforce AgentId"}
+                    required
                   />
                 </Grid>
 

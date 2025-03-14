@@ -790,3 +790,31 @@ resource "aws_iam_role_policy" "lambda_secrets_manager_access" {
   role   = "lambda_exec_role"
   policy = data.aws_iam_policy_document.secrets_manager_access.json
 }
+
+resource "aws_iam_policy" "lambda_secrets_manager_policy" {
+  name        = "LambdaSecretsManagerPolicy"
+  description = "Allows Lambda to manage secrets in Secrets Manager"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:CreateSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = "arn:aws:secretsmanager:us-east-1:891377344574:secret:*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_attach" {
+  role       = aws_iam_role.lambda_exec.name  # Make sure this matches your role name
+  policy_arn = aws_iam_policy.lambda_secrets_manager_policy.arn
+}
+
