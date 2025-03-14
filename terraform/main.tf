@@ -34,6 +34,33 @@ resource "aws_dynamodb_table" "agent_messages" {
 # DynamoDB Tables for OAuth2  #
 ###############################
 
+resource "aws_dynamodb_table" "auth_logs" {
+  name         = "AuthLogsTable"
+  billing_mode = "PAY_PER_REQUEST" # On-demand pricing
+  hash_key     = "requestId"
+
+  attribute {
+    name = "requestId"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "TimestampIndex"
+    hash_key        = "timestamp"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name        = "AuthLogsTable"
+    Environment = "Production"
+  }
+}
+
 resource "aws_dynamodb_table" "agents" {
   name         = "Agents"
   billing_mode = "PAY_PER_REQUEST"
@@ -154,7 +181,7 @@ resource "aws_lambda_function" "send_message" {
   role             = aws_iam_role.lambda_exec.arn
   handler          = "index.handler"
   runtime          = "nodejs18.x"
-  timeout = 180 # Increase timeout to 5 minutes
+  timeout          = 180 # Increase timeout to 5 minutes
   source_code_hash = filebase64sha256("${path.module}/sendMessageLambda.zip")
   environment {
     variables = {
@@ -195,11 +222,11 @@ resource "aws_lambda_function" "ack_message" {
 # Lambda Authorizer
 
 resource "aws_lambda_function" "authorizer" {
-  filename = "${path.module}/authroizerLambda.zip"
-  function_name = "authroizerLambda"
-  role = aws_iam_role.lambda_exec.arn
-  handler = "index.handler"
-  runtime = "nodejs18.x"
+  filename         = "${path.module}/authroizerLambda.zip"
+  function_name    = "authroizerLambda"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
   source_code_hash = filebase64sha256("${path.module}/authroizerLambda.zip")
   environment {
     variables = {}
@@ -277,9 +304,9 @@ resource "aws_api_gateway_resource" "messages" {
 
 # POST /messages
 resource "aws_api_gateway_method" "post_messages" {
-  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
-  resource_id   = aws_api_gateway_resource.messages.id
-  http_method   = "POST"
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+  resource_id = aws_api_gateway_resource.messages.id
+  http_method = "POST"
   #authorization = "CUSTOM"
   authorization = "NONE"
   authorizer_id = aws_api_gateway_authorizer.token_authorizer.id
@@ -334,12 +361,12 @@ data "aws_region" "current" {}
 
 # Lambda Authorizer configuration
 resource "aws_api_gateway_authorizer" "token_authorizer" {
-  name                   = "tokenAuthorizer"
-  rest_api_id            = aws_api_gateway_rest_api.agent_api.id
-  authorizer_uri         = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${aws_lambda_function.authorizer.arn}/invocations"
+  name                             = "tokenAuthorizer"
+  rest_api_id                      = aws_api_gateway_rest_api.agent_api.id
+  authorizer_uri                   = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${aws_lambda_function.authorizer.arn}/invocations"
   authorizer_result_ttl_in_seconds = 300
-  identity_source        = "method.request.header.Authorization"
-  type                   = "TOKEN"
+  identity_source                  = "method.request.header.Authorization"
+  type                             = "TOKEN"
 }
 
 resource "aws_api_gateway_integration" "put_ack_message_integration" {
@@ -391,30 +418,30 @@ resource "aws_api_gateway_resource" "validate" {
 # Define API Methods and Integrations
 locals {
   api_methods = {
-    "register"       = { path = aws_api_gateway_resource.register,       http_method = "POST" }
+    "register"       = { path = aws_api_gateway_resource.register, http_method = "POST" }
     "request_access" = { path = aws_api_gateway_resource.request_access, http_method = "POST" }
     "approve_access" = { path = aws_api_gateway_resource.approve_access, http_method = "POST" }
-    "token"          = { path = aws_api_gateway_resource.token,          http_method = "POST" }
-    "validate"       = { path = aws_api_gateway_resource.validate,       http_method = "GET" }
+    "token"          = { path = aws_api_gateway_resource.token, http_method = "POST" }
+    "validate"       = { path = aws_api_gateway_resource.validate, http_method = "GET" }
   }
 }
 
 resource "aws_api_gateway_method" "api_methods" {
-  for_each     = local.api_methods
-  rest_api_id  = aws_api_gateway_rest_api.agent_api.id
-  resource_id  = each.value.path.id
-  http_method  = each.value.http_method
+  for_each      = local.api_methods
+  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
+  resource_id   = each.value.path.id
+  http_method   = each.value.http_method
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "api_integrations" {
-  for_each              = aws_api_gateway_method.api_methods
-  rest_api_id           = aws_api_gateway_rest_api.agent_api.id
-  resource_id           = each.value.resource_id
-  http_method           = each.value.http_method
+  for_each                = aws_api_gateway_method.api_methods
+  rest_api_id             = aws_api_gateway_rest_api.agent_api.id
+  resource_id             = each.value.resource_id
+  http_method             = each.value.http_method
   integration_http_method = "POST"
-  type                  = "AWS_PROXY"
-  uri                   = aws_lambda_function.oauth2_registry.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.oauth2_registry.invoke_arn
 }
 
 resource "aws_lambda_permission" "oauth2_api_gateway" {
@@ -460,7 +487,7 @@ resource "aws_iam_user_policy" "api_gateway_access" {
 
 # S3 bucket for website hosting
 resource "aws_s3_bucket" "website_bucket" {
-  bucket = "agent-registry-app-frontend"  # Change this to a globally unique name
+  bucket = "agent-registry-app-frontend" # Change this to a globally unique name
 }
 
 # Bucket ownership controls
@@ -497,7 +524,7 @@ resource "aws_s3_bucket_website_configuration" "website_config" {
     suffix = "index.html"
   }
   error_document {
-    key = "index.html"  # SPA routing - redirect all errors to index.html
+    key = "index.html" # SPA routing - redirect all errors to index.html
   }
 }
 
@@ -524,7 +551,7 @@ resource "aws_s3_bucket_cors_configuration" "website_bucket_cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "HEAD"]
-    allowed_origins = ["*"]  # In production, restrict to your domain
+    allowed_origins = ["*"] # In production, restrict to your domain
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
@@ -539,29 +566,29 @@ resource "aws_api_gateway_rest_api_policy" "agent_api_policy" {
   rest_api_id = aws_api_gateway_rest_api.agent_api.id
 
   policy = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "execute-api:Invoke",
-      "Resource": "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*"
-    },
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "cloudfront.amazonaws.com"
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : "*",
+        "Action" : "execute-api:Invoke",
+        "Resource" : "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*"
       },
-      "Action": "execute-api:Invoke",
-      "Resource": "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*",
-      "Condition": {
-        "StringEquals": {
-          "AWS:SourceArn": "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.website_distribution.id}"
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "cloudfront.amazonaws.com"
+        },
+        "Action" : "execute-api:Invoke",
+        "Resource" : "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*",
+        "Condition" : {
+          "StringEquals" : {
+            "AWS:SourceArn" : "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.website_distribution.id}"
+          }
         }
       }
-    }
-  ]
-})
+    ]
+  })
 }
 
 # CloudFront distribution
@@ -585,7 +612,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
   origin {
     domain_name = replace(aws_api_gateway_deployment.agent_api_deployment.invoke_url, "/^https?://([^/]*).*/", "$1")
     origin_id   = "APIGateway"
-    origin_path = ""  # Use your API stage name
+    origin_path = "" # Use your API stage name
 
     custom_origin_config {
       http_port              = 80
@@ -611,21 +638,21 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     viewer_protocol_policy = "redirect-to-https"
     #cache_policy_id          = "Managed-CachingDisabled"
     #origin_request_policy_id = "Managed-AllViewerExceptHostHeader"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
   }
 
   # Cache behavior for API Gateway
   ordered_cache_behavior {
-    path_pattern     = "/prod/*"  # Match the stage path
+    path_pattern     = "/prod/*" # Match the stage path
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "APIGateway"
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Content-Type","Referer"]  # Ensure Authorization header is forwarded
+      headers      = ["Authorization", "Content-Type", "Referer"] # Ensure Authorization header is forwarded
       cookies {
         forward = "none"
       }
@@ -663,10 +690,10 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 
 # API Gateway CORS configuration
 resource "aws_api_gateway_method" "options_method" {
-  for_each     = local.api_methods
-  rest_api_id  = aws_api_gateway_rest_api.agent_api.id
-  resource_id  = each.value.path.id
-  http_method  = "OPTIONS"
+  for_each      = local.api_methods
+  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
+  resource_id   = each.value.path.id
+  http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
@@ -734,8 +761,8 @@ output "s3_bucket_name" {
 }
 
 resource "aws_iam_user_policy" "s3_policy" {
-  name   = "s3-put-bucket-policy"
-  user   = "multi-agent-user"
+  name = "s3-put-bucket-policy"
+  user = "multi-agent-user"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -751,8 +778,8 @@ resource "aws_iam_user_policy" "s3_policy" {
 # Define the IAM policy document for Secrets Manager access
 data "aws_iam_policy_document" "secrets_manager_access" {
   statement {
-    effect  = "Allow"
-    actions = ["secretsmanager:GetSecretValue"]
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
     resources = ["arn:aws:secretsmanager:us-east-1:891377344574:secret:SalesforceCredentials-*"]
   }
 }
