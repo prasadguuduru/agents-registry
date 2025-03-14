@@ -6,8 +6,9 @@
         "build": "npx tsc --project ./tsconfig.json && mkdir -p ../../build/agentRegistryLambda && cp -r * ../../build/agentRegistryLambda"
     },
     "dependencies": {
+        "@aws-sdk/client-secrets-manager": "^3.758.0"
     },
     "devDependencies": {
-      "@types/aws-lambda": "^8.10.92"
+        "@types/aws-lambda": "^8.10.92"
     }
-  }
+}

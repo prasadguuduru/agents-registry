@@ -68,6 +68,10 @@ const AgentRegistration = () => {
       newErrors.agentUrl = "Agent URL is required";
     }
 
+    if (!formData.salesforceAgentId) {
+      newErrors.salesforceAgentId = "Salesforce AgentID is required";
+    }
+
     if (!formData.clientId) {
       newErrors.clientId = "Client ID is required";
     }
@@ -110,6 +114,7 @@ const AgentRegistration = () => {
       setFormData({
         agentId: "",
         type: "service",
+        salesforceAgentId: "",
         agentUrl: "",
         clientId: "",
         secret: "",
@@ -198,6 +203,18 @@ const AgentRegistration = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
+                    label="Salesforce AgentId"
+                    name="type"
+                    value={formData.salesforceAgentId}
+                    onChange={handleChange}
+                    error={!!errors.salesforceAgentId}
+                    helperText={errors.salesforceAgentId || "Enter the SalesforceAgentId"}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
                     label="Agent URL"
                     name="agentUrl"
                     value={formData.agentUrl}
@@ -268,6 +285,7 @@ const AgentRegistration = () => {
                       setFormData({
                         agentId: "",
                         type: "service",
+                        salesforceAgentId: "",
                         agentUrl: "",
                         clientId: "",
                         secret: "",

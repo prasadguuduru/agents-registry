@@ -1,0 +1,8 @@
+**/terraform/terraform.tfstate
+**/terraform/terraform.tfstate.backup
+**/*.zip
+**/**/.terraform/*
+**/.terraform/*
+build/
+dist/
+node_modules/
