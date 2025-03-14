@@ -280,8 +280,8 @@ resource "aws_api_gateway_method" "post_messages" {
   rest_api_id   = aws_api_gateway_rest_api.agent_api.id
   resource_id   = aws_api_gateway_resource.messages.id
   http_method   = "POST"
-  #authorization = "CUSTOM"
-  authorization = "NONE"
+  authorization = "CUSTOM"
+  #authorization = "NONE"
   authorizer_id = aws_api_gateway_authorizer.token_authorizer.id
 }
 
