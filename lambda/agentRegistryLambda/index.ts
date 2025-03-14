@@ -63,7 +63,7 @@ export async function handler(event: APIGatewayEvent, context: Context, callback
             }
         }).promise();
 
-        const secretName = "SalesforceCredentials";
+        const secretName = agentId;
         const secretValue = {
             CLIENT_ID: clientId,
             CLIENT_SECRET: secret,
@@ -158,7 +158,7 @@ const createSecret = async (secretName: string, secretValue: Record<string, stri
         console.log("Secret created successfully:", response);
         return Promise.resolve(true);
     } catch (error) {
-        return Promise.resolve(false);
         console.error("Error creating secret:", error);
+        return Promise.resolve(false);
     }
 };
