@@ -40,20 +40,24 @@ export const handler = async (
 
     // Fetch token record from DynamoDB
     console.log("Fetching token record from DynamoDB...");
+    console.log("##token string:", token);
     const tokenRecord = await getTokenFromDynamoDB(token);
+    console.log("##Token record:", JSON.stringify(tokenRecord));
     if (!tokenRecord) {
       console.log("Token not found in database.");
       await logAuthorizationAttempt(clientId, targetAgentId, effect);
       return generatePolicy("UnauthorizedUser", effect, event.methodArn);
     }
 
-    // Extract source and target from token record
-    clientId = tokenRecord.source || "Unknown";
-    targetAgentId = tokenRecord.target || "Unknown";
-    
+    // Extract clientId and targetAgentId from token record
+    clientId = tokenRecord.clientId || "Unknown";
+    targetAgentId = tokenRecord.targetAgentId || "Unknown";
+    console.log("clientId : "+clientId);
+    console.log("targetAgentId : "+targetAgentId);
     if (clientId !== "Unknown" && targetAgentId !== "Unknown") {
       effect = "Allow"; // Grant access
     }
+    console.log("effect : "+effect);
 
     // Log the authorization attempt
     await logAuthorizationAttempt(clientId, targetAgentId, effect);
@@ -91,6 +95,7 @@ const logAuthorizationAttempt = async (
   targetAgentId: string,
   effect: StatementEffect
 ) => {
+  console.log("effect : "+effect);
   try {
     const logEntry = {
       TableName: AUTH_LOGS_TABLE,
@@ -105,7 +110,7 @@ const logAuthorizationAttempt = async (
     await dynamoDB.put(logEntry).promise();
     console.log(`Logged authorization attempt: ${JSON.stringify(logEntry.Item)}`);
   } catch (err) {
-    console.error("Failed to log authorization attempt:");
+    console.error("Failed to log authorization attempt:", err);
   }
 };
 
@@ -116,6 +121,11 @@ const generatePolicy = (
   resource: string,
   targetAgentId?: string
 ): APIGatewayAuthorizerResult => {
+
+  console.log('principalId : '+principalId);
+  console.log('effect : '+effect);
+  console.log('resource : '+resource);
+  console.log('targetAgentId : '+targetAgentId);  
   return {
     principalId,
     policyDocument: {
