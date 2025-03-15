@@ -136,6 +136,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
           aws_dynamodb_table.access_control.arn,
           aws_dynamodb_table.tokens.arn,
           aws_dynamodb_table.agent_messages.arn,
+          #aws_dynamodb_table.auth_logs.arn,
+          "arn:aws:dynamodb:us-east-1:891377344574:table/AuthLogsTable",
           "${aws_dynamodb_table.agent_messages.arn}/index/ReceiverIndex"
         ]
       },
@@ -304,11 +306,11 @@ resource "aws_api_gateway_resource" "messages" {
 
 # POST /messages
 resource "aws_api_gateway_method" "post_messages" {
-  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
-  resource_id   = aws_api_gateway_resource.messages.id
-  http_method   = "POST"
-  authorization = "CUSTOM"
-  #authorization = "NONE"
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+  resource_id = aws_api_gateway_resource.messages.id
+  http_method = "POST"
+  #authorization = "CUSTOM"
+  authorization = "NONE"
   authorizer_id = aws_api_gateway_authorizer.token_authorizer.id
 }
 
@@ -779,8 +781,13 @@ resource "aws_iam_user_policy" "s3_policy" {
 data "aws_iam_policy_document" "secrets_manager_access" {
   statement {
     effect    = "Allow"
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = ["arn:aws:secretsmanager:us-east-1:891377344574:secret:SalesforceCredentials-*"]
+    actions   = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:CreateSecret",
+          "secretsmanager:DescribeSecret",  # Optional: Add if you need to describe secrets
+          "secretsmanager:PutSecretValue"   # Optional: Add if you need to update secrets
+        ]
+    resources = ["arn:aws:secretsmanager:us-east-1:891377344574:secret:*-*"]
   }
 }
 
@@ -789,32 +796,5 @@ resource "aws_iam_role_policy" "lambda_secrets_manager_access" {
   name   = "SecretsManagerAccess"
   role   = "lambda_exec_role"
   policy = data.aws_iam_policy_document.secrets_manager_access.json
-}
-
-resource "aws_iam_policy" "lambda_secrets_manager_policy" {
-  name        = "LambdaSecretsManagerPolicy"
-  description = "Allows Lambda to manage secrets in Secrets Manager"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:CreateSecret",
-          "secretsmanager:PutSecretValue",
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:UpdateSecret",
-          "secretsmanager:DescribeSecret"
-        ]
-        Resource = "arn:aws:secretsmanager:us-east-1:891377344574:secret:*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_attach" {
-  role       = aws_iam_role.lambda_exec.name  # Make sure this matches your role name
-  policy_arn = aws_iam_policy.lambda_secrets_manager_policy.arn
 }
 

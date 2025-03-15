@@ -79,7 +79,7 @@ export async function handler(event: APIGatewayEvent, context: Context, callback
 
     if (httpMethod === "POST" && path === "/request-access") {
         const { requesterId, targetAgentId } = parsedBody;
-        if (requesterId === targetAgentId) return sendResponse(400, { error: "Cannot request access to self" });
+        //if (requesterId === targetAgentId) return sendResponse(400, { error: "Cannot request access to self" });
 
         await dynamoDB.put({ TableName: ACL_TABLE, Item: { requesterId, targetAgentId, status: "pending" } }).promise();
         return sendResponse(200, { message: "Access request submitted" });
@@ -111,7 +111,7 @@ export async function handler(event: APIGatewayEvent, context: Context, callback
 
         const accessToken = generateSecret();
         await dynamoDB.put({ TableName: "Tokens", Item: { accessToken, clientId, targetAgentId, expiresAt: Date.now() + 3600000 } }).promise();
-        return sendResponse(200, { accessToken, expiresIn: 3600 });
+        return sendResponse(200, { accessToken, expiresIn: 360000 });
     }
 
     if (httpMethod === "GET" && path === "/validate") {

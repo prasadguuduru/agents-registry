@@ -2,6 +2,8 @@ import axios from 'axios';
 import { APIGatewayEvent, Context } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const AGENT_TABLE = "Agents";
 
 const secretsManager = new AWS.SecretsManager();
 
@@ -16,23 +18,55 @@ interface SessionResponse {
     id: string;
 }
 
-async function getSalesforceCredentials(): Promise<{ CLIENT_ID: string; CLIENT_SECRET: string }> {
-    const secretName = 'SalesforceCredentials';
-    const data = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+async function getSalesforceCredentials(targetAgentId: string): Promise<{ CLIENT_ID: string; CLIENT_SECRET: string }> {
+    //const secretName = 'SalesforceCredentials';
+    const data = await secretsManager.getSecretValue({ SecretId: targetAgentId }).promise();
+    console.log('####data : '+JSON.stringify(data));
     if (!data.SecretString) throw new Error('SecretString is empty');
+
     return JSON.parse(data.SecretString);
 }
 
-export const handler = async (event: APIGatewayEvent, context: Context) => {
+async function getAgentFromDynamoDB(targetAgentid: string)  {
     try {
-        const { CLIENT_ID, CLIENT_SECRET } = await getSalesforceCredentials();
+      const params = {
+        TableName: 'Agents',
+        Key: { agentId: targetAgentid }
+      };
+  
+      const data = await dynamoDB.get(params).promise();
+      return data.Item || null;
+    } catch (error) {
+      console.error("Error fetching targetAgentId from DynamoDB:");
+      return null;
+    }
+  };
+
+export const handler = async (event: APIGatewayEvent, context: Context) => {
+
+    console.log('Event:', JSON.stringify(event));
+    const message = getMessageFromEvent(event);
+    
+    const targetAgentId = event.requestContext?.authorizer?.targetAgentId || '';
+    console.log('targetAgentId:', targetAgentId);
+    const agentItem = await getAgentFromDynamoDB(targetAgentId);
+    console.log('Agent Item:', JSON.stringify(agentItem));
+    console.log('agentItem?.targetAgentId: ', agentItem?.agentId);
+    try {
+        //agentId is targetAgentId
+        const { CLIENT_ID, CLIENT_SECRET } = await getSalesforceCredentials(agentItem?.agentId);
 
         const requestBody = JSON.parse(event.body || '{}');
-        const agentId = requestBody.agentId || DEFAULT_AGENT_ID;
-        const salesforceDomain = requestBody.salesforceDomain || DEFAULT_SALESFORCE_DOMAIN;
+        const agentId = targetAgentId || DEFAULT_AGENT_ID;
+        console.log('TARGET Agent ID:', agentId);
+        const salesforceDomain = agentItem?.agentUrl || DEFAULT_SALESFORCE_DOMAIN;
 
+        const agent = await dynamoDB.get({ TableName: AGENT_TABLE, Key: { agentId: agentId } }).promise();
+        if (!agent.Item) return sendResponse(401, { error: "Invalid credentials" });
+
+        console.log('Salsforce Agent ID:', agent.Item.salesforceAgentId);
         const SALESFORCE_TOKEN_URL = `https://${salesforceDomain}/services/oauth2/token`;
-        const SALESFORCE_SESSION_URL = `https://api.salesforce.com/einstein/ai-agent/v1/agents/${agentId}/sessions`;
+        const SALESFORCE_SESSION_URL = `https://api.salesforce.com/einstein/ai-agent/v1/agents/${agent.Item.salesforceAgentId}/sessions`;
         const SALESFORCE_MESSAGE_URL = 'https://api.salesforce.com/einstein/ai-agent/v1/sessions';
 
         // Step 1: Get Token
@@ -65,12 +99,14 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
         const sessionId = sessionResponse.data.sessionId;
         console.log('Session ID:', sessionId);
 
+        console.log('##Chatting with Agentforce ')
+
         // Step 3: Call Agent with Message
         const messageResponse = await axios.post(`${SALESFORCE_MESSAGE_URL}/${sessionId}/messages`, {
             message: {
                 sequenceId: 1,
                 type: 'Text',
-                text: 'aws function callout and list me ConversationID',
+                text: message,
             },
         }, {
             headers: {
@@ -86,3 +122,38 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
         return { statusCode: 500, body: JSON.stringify({ error: error }) };
     }
 };
+
+function sendResponse(statusCode: number, body: object) {
+    return {
+        statusCode,
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+    };
+}
+
+function getMessageFromEvent(event: APIGatewayEvent): string {
+    try {
+      // Check if event.body exists
+      if (!event?.body) {
+        throw new Error('Event body is missing');
+      }
+  
+      let parsedBody;
+  
+      // Handle case where body is a string (needs parsing) vs already parsed object
+      if (typeof event.body === 'string') {
+        parsedBody = JSON.parse(event.body);
+      } else {
+        parsedBody = event.body;
+      }
+  
+      // Verify message exists in the parsed body
+      if (!parsedBody.message) {
+        throw new Error('Message attribute not found in event body');
+      }
+  
+      return parsedBody.message;
+    } catch (error) {
+      throw new Error(`Failed to extract message: ${error}`);
+    }
+  }
