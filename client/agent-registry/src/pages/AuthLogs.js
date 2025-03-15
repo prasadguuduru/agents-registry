@@ -26,7 +26,7 @@ const AuthLogs = () => {
       if (!response.ok) throw new Error("Failed to fetch logs");
 
       const data = await response.json();
-      setLogs(data);
+      setLogs(data.logs || []);
       setError("");
     } catch (err) {
       console.error("Error fetching logs:", err.message);

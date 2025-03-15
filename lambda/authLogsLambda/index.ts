@@ -14,18 +14,24 @@ function sendResponse(statusCode: number, body: object) {
 }
 
 export async function handler(event: APIGatewayEvent, context: Context) {
-  if (httpMethod === "GET" && path === "/authlogs") {
+  if (event.httpMethod === "GET" && event.path === "/authlogs") {
     console.log("Fetching authorization logs...");
 
-    // Query DynamoDB for logs
-    const params = {
-      TableName: AUTH_LOGS_TABLE,
-      Limit: 50, // Adjust if needed
-      ScanIndexForward: false, // Get latest logs first
-    };
+    try {
+      const params = {
+        TableName: AUTH_LOGS_TABLE,
+        Limit: 50, // Adjust if needed
+        ScanIndexForward: false, // Get latest logs first
+      };
 
-    const data = await dynamoDB.scan(params).promise();
+      const data = await dynamoDB.scan(params).promise();
+      return sendResponse(200, { logs: data.Items || [] });
+
+    } catch (error) {
+      console.error("Error fetching auth logs:", error);
+      return sendResponse(500, { error: "Internal Server Error" });
+    }
   }
 
-  return sendResponse(200, { logs: data.Items || [] });
+  return sendResponse(404, { error: "Not found" });
 }

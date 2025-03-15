@@ -338,6 +338,30 @@ resource "aws_api_gateway_integration" "get_messages_integration" {
   uri                     = aws_lambda_function.get_messages.invoke_arn
 }
 
+# GET /authlogs
+resource "aws_api_gateway_resource" "authlogs" {
+  rest_api_id = aws_api_gateway_rest_api.agent_api.id
+  parent_id   = aws_api_gateway_rest_api.agent_api.root_resource_id
+  path_part   = "authlogs"
+}
+
+resource "aws_api_gateway_method" "get_authlogs" {
+  rest_api_id   = aws_api_gateway_rest_api.agent_api.id
+  resource_id   = aws_api_gateway_resource.authlogs.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_authlogs_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.agent_api.id
+  resource_id             = aws_api_gateway_resource.authlogs.id
+  http_method             = aws_api_gateway_method.get_authlogs.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.oauth2_registry.invoke_arn
+}
+
+
 # PUT /messages/{messageId}/ack
 resource "aws_api_gateway_resource" "ack" {
   rest_api_id = aws_api_gateway_rest_api.agent_api.id
