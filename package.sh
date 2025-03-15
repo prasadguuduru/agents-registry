@@ -2,7 +2,7 @@
 rm -rf ./build
 mkdir -p ./build
 
-for lambda in ackMessageLambda getMessagesLambda sendMessageLambda authroizerLambda agentRegistryLambda; do
+for lambda in ackMessageLambda getMessagesLambda sendMessageLambda authroizerLambda agentRegistryLambda authLogsLambda; do
     rm ./terraform/${lambda}.zip
     mkdir -p ./build/$lambda
     npx esbuild ./lambda/$lambda/index.ts \

@@ -22,7 +22,20 @@ const AuthLogs = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch(API_URL);
+      //const response = await fetch(API_URL);
+
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      const method = 'GET';
+      const options = {
+        method,
+        headers,
+        mode: 'cors'
+      };
+
+      const response = await fetch(API_URL, options);
+    
       if (!response.ok) throw new Error("Failed to fetch logs");
 
       const data = await response.json();

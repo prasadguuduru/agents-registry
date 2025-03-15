@@ -6,7 +6,8 @@
         "lambda/getMessagesLambda",
         "lambda/ackMessageLambda",
         "lambda/agentRegistryLambda",
-        "lambda/authroizer"
+        "lambda/authroizer",
+        "lambda/authLogsLambda"
     ],
     "version": "1.0.0",
     "description": "Agent Communication API Lambdas with TypeScript",

@@ -25,6 +25,7 @@ export async function handler(event: APIGatewayEvent, context: Context) {
       };
 
       const data = await dynamoDB.scan(params).promise();
+      console.log("##Data:", JSON.stringify(data));
       return sendResponse(200, { logs: data.Items || [] });
 
     } catch (error) {

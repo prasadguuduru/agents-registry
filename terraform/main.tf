@@ -828,13 +828,13 @@ resource "aws_iam_user_policy" "s3_policy" {
 # Define the IAM policy document for Secrets Manager access
 data "aws_iam_policy_document" "secrets_manager_access" {
   statement {
-    effect    = "Allow"
-    actions   = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:CreateSecret",
-          "secretsmanager:DescribeSecret",  # Optional: Add if you need to describe secrets
-          "secretsmanager:PutSecretValue"   # Optional: Add if you need to update secrets
-        ]
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:CreateSecret",
+      "secretsmanager:DescribeSecret", # Optional: Add if you need to describe secrets
+      "secretsmanager:PutSecretValue"  # Optional: Add if you need to update secrets
+    ]
     resources = ["arn:aws:secretsmanager:us-east-1:891377344574:secret:*-*"]
   }
 }
@@ -845,4 +845,3 @@ resource "aws_iam_role_policy" "lambda_secrets_manager_access" {
   role   = "lambda_exec_role"
   policy = data.aws_iam_policy_document.secrets_manager_access.json
 }
-

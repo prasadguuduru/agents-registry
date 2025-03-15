@@ -9,6 +9,7 @@ import AWS from "aws-sdk";
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const AUTH_LOGS_TABLE = "AuthLogsTable";
 const TOKENS_TABLE = "Tokens";
+const AGENT_TABLE = "Agents";
 
 export const handler = async (
   event: APIGatewayTokenAuthorizerEvent,
@@ -54,6 +55,13 @@ export const handler = async (
     targetAgentId = tokenRecord.targetAgentId || "Unknown";
     console.log("clientId : "+clientId);
     console.log("targetAgentId : "+targetAgentId);
+
+    const targetAgentRecord = await dynamoDB.get({ TableName: AGENT_TABLE, Key: { agentId: targetAgentId } }).promise();
+    if (targetAgentRecord.Item) {
+        console.log( "####TargetAgent Details###"+ JSON.stringify(targetAgentRecord.Item));
+    }
+    
+
     if (clientId !== "Unknown" && targetAgentId !== "Unknown") {
       effect = "Allow"; // Grant access
     }
