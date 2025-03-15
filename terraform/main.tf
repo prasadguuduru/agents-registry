@@ -253,6 +253,21 @@ resource "aws_lambda_function" "oauth2_registry" {
   }
 }
 
+resource "aws_lambda_function" "authlogs_lambda" {
+  filename         = "${path.module}/authLogsLambda.zip"
+  function_name    = "authLogsLambda"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "index.handler"
+  runtime          = "nodejs18.x"
+  timeout          = 180
+  source_code_hash = filebase64sha256("${path.module}/authLogsLambda.zip")
+  environment {
+    variables = {
+      AUTH_LOGS_TABLE = aws_dynamodb_table.auth_logs.name
+    }
+  }
+}
+
 
 ####################################
 # Lambda Permissions for API GW    #
@@ -286,6 +301,14 @@ resource "aws_lambda_permission" "authorizer_apigw" {
   statement_id  = "AllowAPIGatewayInvokeAuthorizer"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.authorizer.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "authlogs_apigw" {
+  statement_id  = "AllowAPIGatewayInvokeAuthLogs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.authlogs_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.agent_api.execution_arn}/*/*"
 }
@@ -483,7 +506,8 @@ resource "aws_api_gateway_deployment" "agent_api_deployment" {
     aws_api_gateway_integration.post_messages_integration,
     aws_api_gateway_integration.get_messages_integration,
     aws_api_gateway_integration.put_ack_message_integration,
-    aws_api_gateway_integration.api_integrations
+    aws_api_gateway_integration.api_integrations,
+    aws_api_gateway_integration.get_authlogs_integration
   ]
   rest_api_id = aws_api_gateway_rest_api.agent_api.id
   stage_name  = "prod"
